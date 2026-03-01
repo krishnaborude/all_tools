@@ -1,0 +1,9 @@
+node_modules/
+package-lock.json
+dist/
+*.log
+.DS_Store
+
+# Link check generated files
+link-check-results.txt
+link-check-summary.md
