@@ -21,8 +21,11 @@
       const isLocal =
         window.location.hostname === "localhost" ||
         window.location.hostname === "127.0.0.1";
+      const path = window.location.pathname;
+      const isDistPath =
+        /\/dist\/?$/.test(path) || path.endsWith("/dist/index.html");
 
-      if (isLocal) {
+      if (isLocal || isDistPath) {
         import("/src/main.jsx");
       } else {
         // Fallback for GitHub Pages "Deploy from branch" mode:
