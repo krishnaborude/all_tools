@@ -14,24 +14,9 @@
       href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
+    <script type="module" crossorigin src="./assets/index-Bo2UFdC7.js"></script>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module">
-      const isLocal =
-        window.location.hostname === "localhost" ||
-        window.location.hostname === "127.0.0.1";
-
-      if (isLocal) {
-        import("/src/main.jsx");
-      } else {
-        // Fallback for GitHub Pages "Deploy from branch" mode:
-        // serve the built Vite app from ./dist/.
-        const target = new URL("./dist/", window.location.href).toString();
-        if (!window.location.pathname.endsWith("/dist/")) {
-          window.location.replace(target);
-        }
-      }
-    </script>
   </body>
 </html>
