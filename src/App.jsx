@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { parseReadme } from "./parseReadme";
+import TargetCursor from "./components/TargetCursor";
+import toolsData from "./data/osint-tools.json";
 
 const PAGE_SIZE = 48;
 
@@ -8,46 +9,13 @@ function formatCount(number) {
 }
 
 export default function App() {
-  const [items, setItems] = useState([]);
-  const [sections, setSections] = useState([]);
   const [query, setQuery] = useState("");
   const [selectedSection, setSelectedSection] = useState("");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const loadMoreRef = useRef(null);
-
-  useEffect(() => {
-    let isCancelled = false;
-
-    async function loadReadme() {
-      try {
-        setLoading(true);
-        const response = await fetch("./README.md", { cache: "no-store" });
-        if (!response.ok) {
-          throw new Error(`README load failed: HTTP ${response.status}`);
-        }
-
-        const markdown = await response.text();
-        const parsed = parseReadme(markdown);
-        if (isCancelled) return;
-
-        setItems(parsed.items);
-        setSections(parsed.sections);
-        setError("");
-      } catch (err) {
-        if (isCancelled) return;
-        setError(err.message || "Unknown error while loading README.");
-      } finally {
-        if (!isCancelled) setLoading(false);
-      }
-    }
-
-    loadReadme();
-    return () => {
-      isCancelled = true;
-    };
-  }, []);
+  const searchInputRef = useRef(null);
+  const items = toolsData.items;
+  const sections = toolsData.sections;
 
   const filteredItems = useMemo(() => {
     const normalizedQuery = query.toLowerCase().trim();
@@ -64,7 +32,7 @@ export default function App() {
   const canLoadMore = visibleCount < filteredItems.length;
 
   useEffect(() => {
-    if (loading || error || !canLoadMore || !loadMoreRef.current) return;
+    if (!canLoadMore || !loadMoreRef.current) return;
 
     const target = loadMoreRef.current;
     const observer = new IntersectionObserver(
@@ -79,7 +47,7 @@ export default function App() {
 
     observer.observe(target);
     return () => observer.disconnect();
-  }, [loading, error, canLoadMore, filteredItems.length]);
+  }, [canLoadMore, filteredItems.length]);
 
   function resetFilters() {
     setQuery("");
@@ -97,8 +65,46 @@ export default function App() {
     setVisibleCount(PAGE_SIZE);
   }
 
+  useEffect(() => {
+    function isTypingContext(target) {
+      if (!target) return false;
+      const tag = target.tagName?.toLowerCase();
+      return (
+        tag === "input" ||
+        tag === "textarea" ||
+        tag === "select" ||
+        target.isContentEditable
+      );
+    }
+
+    function onKeyDown(event) {
+      if (event.key === "/") {
+        if (isTypingContext(event.target)) return;
+        event.preventDefault();
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+        return;
+      }
+
+      if (event.key === "Escape") {
+        if (!query && !selectedSection) return;
+        event.preventDefault();
+        resetFilters();
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [query, selectedSection]);
+
   return (
     <div className="page">
+      <TargetCursor
+        spinDuration={2}
+        hideDefaultCursor
+        parallaxOn
+        hoverDuration={0.2}
+      />
       <div className="noise" aria-hidden="true" />
       <div className="glow glow-1" aria-hidden="true" />
       <div className="glow glow-2" aria-hidden="true" />
@@ -116,7 +122,7 @@ export default function App() {
           <label className="sr-only" htmlFor="search">
             Search tools
           </label>
-          <div className="search-shell">
+          <div className="search-shell cursor-target">
             <svg
               className="search-icon"
               viewBox="0 0 24 24"
@@ -130,6 +136,8 @@ export default function App() {
             </svg>
             <input
               id="search"
+              ref={searchInputRef}
+              className="cursor-target"
               type="search"
               placeholder="Search for tools, categories, or keywords..."
               value={query}
@@ -139,17 +147,13 @@ export default function App() {
         </section>
 
         <section className="meta-row centered">
-          <p>
-            {loading
-              ? "Loading tools..."
-              : `${formatCount(filteredItems.length)} tools available`}
-          </p>
+          <p>{formatCount(filteredItems.length)} tools available</p>
         </section>
 
         <section className="chips" aria-label="Quick category filters">
           <button
             type="button"
-            className={`chip ${selectedSection === "" ? "active" : ""}`}
+            className={`chip cursor-target ${selectedSection === "" ? "active" : ""}`}
             onClick={() => changeSection("")}
           >
             All
@@ -158,7 +162,7 @@ export default function App() {
             <button
               type="button"
               key={section.name}
-              className={`chip ${
+              className={`chip cursor-target ${
                 selectedSection === section.name ? "active" : ""
               }`}
               onClick={() => changeSection(section.name)}
@@ -167,38 +171,27 @@ export default function App() {
             </button>
           ))}
           {(query || selectedSection) && (
-            <button type="button" className="chip reset-chip" onClick={resetFilters}>
+            <button
+              type="button"
+              className="chip reset-chip cursor-target"
+              onClick={resetFilters}
+            >
               Reset Filters
             </button>
           )}
         </section>
 
-        {error ? (
-          <section className="state error">
-            <p>{error}</p>
-            <p>Run with `npm run dev` and open the local URL from Vite.</p>
-          </section>
-        ) : null}
-
-        {!error && loading ? (
-          <section className="grid">
-            {Array.from({ length: 12 }).map((_, index) => (
-              <article className="card skeleton" key={`skeleton-${index}`} />
-            ))}
-          </section>
-        ) : null}
-
-        {!error && !loading && visibleItems.length === 0 ? (
+        {visibleItems.length === 0 ? (
           <section className="state empty">
             <p>No tools match this filter.</p>
           </section>
         ) : null}
 
-        {!error && !loading && visibleItems.length > 0 ? (
+        {visibleItems.length > 0 ? (
           <section className="grid">
             {visibleItems.map((tool, index) => (
               <a
-                className="card card-link"
+                className="card card-link cursor-target"
                 key={tool.id}
                 href={tool.url}
                 target="_blank"
@@ -217,12 +210,10 @@ export default function App() {
           </section>
         ) : null}
 
-        {!loading && !error && (
-          <section className="auto-load">
-            {canLoadMore ? <p>Scroll to auto-load more tools...</p> : <p>End of results.</p>}
-            <div ref={loadMoreRef} className="scroll-sentinel" aria-hidden="true" />
-          </section>
-        )}
+        <section className="auto-load">
+          {canLoadMore ? <p>Scroll to auto-load more tools...</p> : <p>End of results.</p>}
+          <div ref={loadMoreRef} className="scroll-sentinel" aria-hidden="true" />
+        </section>
       </main>
     </div>
   );

@@ -9,6 +9,13 @@
   --text-soft: #9aa6db;
   --chip-bg: rgba(13, 20, 71, 0.75);
   --chip-active-bg: linear-gradient(135deg, #6b72ff, #838aff);
+  --hover-border: linear-gradient(
+    120deg,
+    #54d6ff 0%,
+    #7c8aff 34%,
+    #c07dff 68%,
+    #5df0ff 100%
+  );
   --danger-bg: rgba(92, 30, 42, 0.4);
   --danger-line: rgba(255, 119, 148, 0.45);
 }
@@ -191,13 +198,24 @@ input:focus {
   padding: 10px 22px;
   font-size: clamp(0.86rem, 1.04vw, 1.36rem);
   cursor: pointer;
-  transition: transform 0.17s ease, border-color 0.17s ease, color 0.17s ease;
+  transition:
+    transform 0.17s ease,
+    border-color 0.17s ease,
+    color 0.17s ease,
+    background 0.22s ease,
+    box-shadow 0.22s ease;
 }
 
 .chip:hover {
   transform: translateY(-1px);
-  border-color: rgba(125, 148, 255, 0.85);
+  border-color: transparent;
   color: #c4ceff;
+  background:
+    linear-gradient(var(--chip-bg), var(--chip-bg)) padding-box,
+    var(--hover-border) border-box;
+  box-shadow:
+    0 0 0 1px rgba(130, 153, 255, 0.18),
+    0 0 22px rgba(110, 136, 255, 0.22);
 }
 
 .chip.active {
@@ -230,13 +248,24 @@ input:focus {
     inset 0 1px 0 rgba(220, 229, 255, 0.06);
   animation: fade-up 0.52s ease both;
   animation-delay: var(--delay, 0ms);
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background 0.25s ease,
+    box-shadow 0.25s ease;
   will-change: transform;
 }
 
 .card:hover {
   transform: translateY(-2px);
-  border-color: var(--line-strong);
+  border-color: transparent;
+  background:
+    linear-gradient(160deg, rgba(18, 28, 90, 0.84), var(--surface-card)) padding-box,
+    var(--hover-border) border-box;
+  box-shadow:
+    0 16px 36px rgba(2, 5, 23, 0.68),
+    0 0 0 1px rgba(126, 152, 255, 0.18),
+    0 0 24px rgba(113, 133, 255, 0.24);
 }
 
 .card-link {
@@ -286,7 +315,10 @@ input:focus {
 }
 
 .visit:hover {
-  border-color: rgba(155, 171, 255, 0.95);
+  border-color: transparent;
+  background:
+    linear-gradient(rgba(26, 36, 102, 0.85), rgba(26, 36, 102, 0.85)) padding-box,
+    var(--hover-border) border-box;
 }
 
 .auto-load {
