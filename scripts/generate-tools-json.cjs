@@ -97,12 +97,17 @@ function parseReadme(markdown) {
 
 function main() {
   const root = process.cwd();
-  const readmePath = path.join(root, "README.md");
+  const primarySourcePath = path.join(root, "docs", "TOOLS.md");
+  const fallbackSourcePath = path.join(root, "README.md");
+  const readmePath = fs.existsSync(primarySourcePath)
+    ? primarySourcePath
+    : fallbackSourcePath;
   const outPath = path.join(root, "src", "data", "osint-tools.json");
   const markdown = fs.readFileSync(readmePath, "utf8");
   const parsed = parseReadme(markdown);
   fs.writeFileSync(outPath, JSON.stringify(parsed, null, 2) + "\n", "utf8");
   console.log(`Generated ${outPath}`);
+  console.log(`Source: ${readmePath}`);
   console.log(`Sections: ${parsed.sections.length}, Items: ${parsed.items.length}`);
 }
 
